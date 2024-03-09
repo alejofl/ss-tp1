@@ -21,7 +21,7 @@ public class Plane {
         return particles.stream().collect((Collectors.toList()));
     }
 
-    private static class Builder {
+    public static class Builder {
         private Integer length;
         private final ArrayList<Particle> particles;
 
@@ -34,12 +34,15 @@ public class Plane {
         }
 
         public Builder withLength(int length) {
+            if (particles.stream().anyMatch(particle -> particle.getX() > length || particle.getY() > length) || length <= 0) {
+                throw new IllegalArgumentException();
+            }
             this.length = length;
             return this;
         }
 
         public Builder withParticle(Particle particle) {
-            if (particle.getX() < 0 || particle.getX() > length || particle.getY() < 0 || particle.getY() > length) {
+            if (particle.getX() < 0 || particle.getY() < 0 || (length != null && (particle.getX() > length || particle.getY() > length))) {
                 throw new IllegalArgumentException();
             }
             this.particles.add(particle);
