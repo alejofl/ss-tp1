@@ -23,6 +23,15 @@ public class Particle {
         return y;
     }
 
+    @Override
+    public String toString() {
+        return "Particle{" +
+                "radius=" + radius +
+                ", x=" + x +
+                ", y=" + y +
+                '}';
+    }
+
     public static class Builder {
         private Double radius;
         private Double x;

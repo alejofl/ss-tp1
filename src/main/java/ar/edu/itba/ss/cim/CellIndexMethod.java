@@ -6,6 +6,112 @@ import java.util.ArrayList;
 import java.util.stream.Stream;
 
 public class CellIndexMethod {
+    final private Integer matrixCellCount;
+    final private double interactionRadius;
+    final private boolean periodicConditions;
+    final private Plane plane;
+
+    public CellIndexMethod(Integer matrixCellCount, double interactionRadius, boolean periodicConditions, Plane plane) {
+        this.matrixCellCount = matrixCellCount;
+        this.interactionRadius = interactionRadius;
+        this.periodicConditions = periodicConditions;
+        this.plane = plane;
+    }
+
+    public Integer getMatrixCellCount() {
+        return matrixCellCount;
+    }
+
+    public double getInteractionRadius() {
+        return interactionRadius;
+    }
+
+    public boolean isPeriodicConditions() {
+        return periodicConditions;
+    }
+
+    public Plane getPlane() {
+        return plane;
+    }
+
+    @Override
+    public String toString() {
+        return "CellIndexMethod{" +
+                "matrixCellCount=" + matrixCellCount +
+                ", interactionRadius=" + interactionRadius +
+                ", periodicConditions=" + periodicConditions +
+                ", plane=" + plane +
+                '}';
+    }
+
+    public static class Builder {
+        private boolean optimumMatrixCellCount = false;
+        private Integer matrixCellCount;
+        private Double interactionRadius;
+        private Boolean periodicConditions = false;
+        private Plane plane;
+
+        private Builder() {
+
+        }
+
+        private void calculateOptimumMatrixCellCount() {
+            this.matrixCellCount = (int) Math.ceil(plane.getLength() / interactionRadius);
+        }
+
+        public static Builder newBuilder() {
+            return new Builder();
+        }
+
+        public Builder withOptimumMatrixCellCount() {
+            this.optimumMatrixCellCount = true;
+            if (plane != null && interactionRadius != null) {
+                calculateOptimumMatrixCellCount();
+            }
+            return this;
+        }
+
+        public Builder withMatrixCellCount(int matrixCellCount) {
+            this.optimumMatrixCellCount = false;
+            this.matrixCellCount = matrixCellCount;
+            return this;
+        }
+
+        public Builder withInteractionRadius(double interactionRadius) {
+            this.interactionRadius = interactionRadius;
+            if (plane != null && optimumMatrixCellCount) {
+                calculateOptimumMatrixCellCount();
+            }
+            return this;
+        }
+
+        public Builder withPeriodicConditions(boolean periodicConditions) {
+            this.periodicConditions = periodicConditions;
+            return this;
+        }
+
+        public Builder withPlane(Plane plane) {
+            this.plane = plane;
+            if (plane != null && this.interactionRadius != null && optimumMatrixCellCount) {
+                calculateOptimumMatrixCellCount();
+            }
+            return this;
+        }
+
+        public CellIndexMethod build() {
+            if (this.matrixCellCount == null || this.interactionRadius == null || this.plane == null) {
+                throw new IllegalStateException();
+            }
+
+            return new CellIndexMethod(
+                    this.matrixCellCount,
+                    this.interactionRadius,
+                    this.periodicConditions,
+                    this.plane
+            );
+        }
+    }
+
     public static void main(String[] args) {
         // Leemos archivo y obtenemos los datos
         String[] data = new String[0];
@@ -31,13 +137,13 @@ public class CellIndexMethod {
         }
 
         // Creamos el plano
-        final Plane.Builder planeBuilder = Plane.Builder.newBuilder().withLength(planeLength);
+        Plane.Builder planeBuilder = Plane.Builder.newBuilder().withLength(planeLength);
         // Creamos todas las partículas (con posiciones random)
         // Asignamos las partículas al plano
         for (Double particleRadius : particlesRadius) {
             final double x = Math.random() * planeLength;
             final double y = Math.random() * planeLength;
-            planeBuilder.withParticle(
+            planeBuilder = planeBuilder.withParticle(
                     Particle.Builder.newBuilder()
                             .withX(x)
                             .withY(y)
@@ -48,6 +154,18 @@ public class CellIndexMethod {
         final Plane plane = planeBuilder.build();
 
         // Creamos el ejecutor del método
+        CellIndexMethod.Builder cimBuilder = CellIndexMethod.Builder.newBuilder()
+                .withInteractionRadius(interactionRadius)
+                .withPeriodicConditions(periodicConditions)
+                .withPlane(plane);
+        if (optimumMatrixCellCount) {
+            cimBuilder = cimBuilder.withOptimumMatrixCellCount();
+        } else {
+            cimBuilder = cimBuilder.withMatrixCellCount(matrixCellCount);
+        }
+        final CellIndexMethod cim = cimBuilder.build();
+
         // Ejecutamos el método
+        System.out.println(cim);
     }
 }

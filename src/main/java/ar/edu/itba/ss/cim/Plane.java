@@ -21,6 +21,14 @@ public class Plane {
         return particles.stream().collect((Collectors.toList()));
     }
 
+    @Override
+    public String toString() {
+        return "Plane{" +
+                "length=" + length +
+                ", particles=" + particles +
+                '}';
+    }
+
     public static class Builder {
         private Integer length;
         private final ArrayList<Particle> particles;
