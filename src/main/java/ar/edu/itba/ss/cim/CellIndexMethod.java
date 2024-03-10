@@ -2,28 +2,22 @@ package ar.edu.itba.ss.cim;
 
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.ArrayList;
+import java.util.*;
 import java.util.stream.Stream;
 
 public class CellIndexMethod {
     final private Integer matrixCellCount;
-    final private double interactionRadius;
     final private boolean periodicConditions;
     final private Plane plane;
 
-    public CellIndexMethod(Integer matrixCellCount, double interactionRadius, boolean periodicConditions, Plane plane) {
+    private CellIndexMethod(Integer matrixCellCount, boolean periodicConditions, Plane plane) {
         this.matrixCellCount = matrixCellCount;
-        this.interactionRadius = interactionRadius;
         this.periodicConditions = periodicConditions;
         this.plane = plane;
     }
 
     public Integer getMatrixCellCount() {
         return matrixCellCount;
-    }
-
-    public double getInteractionRadius() {
-        return interactionRadius;
     }
 
     public boolean isPeriodicConditions() {
@@ -38,10 +32,121 @@ public class CellIndexMethod {
     public String toString() {
         return "CellIndexMethod{" +
                 "matrixCellCount=" + matrixCellCount +
-                ", interactionRadius=" + interactionRadius +
                 ", periodicConditions=" + periodicConditions +
                 ", plane=" + plane +
                 '}';
+    }
+
+    public Map<Particle, Set<Particle>> execute() {
+        final double cellSize = 1.0 * plane.getLength() / matrixCellCount;
+        final HashMap<Integer, HashSet<Particle>> matrix = new HashMap<>();
+        final HashMap<Particle, HashSet<Integer>> cellsForParticle = new HashMap<>();
+
+        // Fill the matrix with the particles that are inside each cell
+        for (Particle particle : plane.getParticles()) {
+            for (int i = 0; i < matrixCellCount; i++) {
+                for (int j = 0; j < matrixCellCount; j++) {
+                    final int cellNumber = i * matrixCellCount + (j + 1);
+                    final double cellTopLeftX = j * cellSize;
+                    final double cellTopLeftY = plane.getLength() - i * cellSize;
+                    final double cellBottomRightX = (j + 1) * cellSize;
+                    final double cellBottomRightY = plane.getLength() - (i + 1) * cellSize;
+
+                    // Find the nearest point on the cell to the center of the particle
+                    final double nearestX = Math.max(cellTopLeftX, Math.min(particle.getX(), cellBottomRightX));
+                    final double nearestY = Math.min(cellTopLeftY, Math.max(particle.getY(), cellBottomRightY));
+                    final double distanceX = nearestX - particle.getX();
+                    final double distanceY = nearestY - particle.getY();
+
+                    if (Math.pow(distanceX, 2) + Math.pow(distanceY, 2) <= Math.pow(particle.getRadius(), 2)) {
+                        matrix.putIfAbsent(cellNumber, new HashSet<>());
+                        cellsForParticle.putIfAbsent(particle, new HashSet<>());
+                        matrix.get(cellNumber).add(particle);
+                        cellsForParticle.get(particle).add(cellNumber);
+                    }
+                }
+            }
+        }
+
+        // Create neighbours list
+        final Map<Particle, Set<Particle>> neighbours = new HashMap<>();
+        for (Particle particle : plane.getParticles()) {
+            neighbours.put(particle, new HashSet<>());
+        }
+
+        // Fill the neighbours list
+        for (Particle particle : plane.getParticles()) {
+            final HashSet<Integer> cells = cellsForParticle.get(particle);
+            for (Integer cell : cells) {
+                Optional.ofNullable(matrix.get(cell)).ifPresent(set -> neighbours.get(particle).addAll(set));
+                Integer topCell = null;
+                Integer topRightCell = null;
+                Integer rightCell = null;
+                Integer bottomRightCell = null;
+                if (periodicConditions) {
+                    if (cell % matrixCellCount == 0) {
+                        topCell = (cell - matrixCellCount) % (matrixCellCount * matrixCellCount);
+                        if (topCell == 0) {
+                            topCell = matrixCellCount * matrixCellCount;
+                        }
+                        topRightCell = (cell - 2 * matrixCellCount + 1) % (matrixCellCount * matrixCellCount);
+                        rightCell = (cell + 1 - matrixCellCount) % (matrixCellCount * matrixCellCount);
+                        bottomRightCell = (cell + 1) % (matrixCellCount * matrixCellCount);
+                    } else {
+                        topCell = (cell - matrixCellCount) % (matrixCellCount * matrixCellCount);
+                        topRightCell = (cell - matrixCellCount + 1) % (matrixCellCount * matrixCellCount);
+                        rightCell = (cell + 1) % (matrixCellCount * matrixCellCount);;
+                        bottomRightCell = (cell + matrixCellCount + 1) % (matrixCellCount * matrixCellCount);;
+                    }
+                } else {
+                    if (cell < matrixCellCount) {
+                        rightCell = cell + 1;
+                        bottomRightCell = cell + matrixCellCount + 1;
+                    } else if (cell % matrixCellCount == 0 &&  cell > matrixCellCount) {
+                        topCell = cell - matrixCellCount;
+                    } else if (cell > matrixCellCount * (matrixCellCount - 1) && cell % matrixCellCount != 0) {
+                        topCell = cell - matrixCellCount;
+                        topRightCell = cell - matrixCellCount + 1;
+                        rightCell = cell + 1;
+                    } else if (cell % matrixCellCount != 0) {
+                        topCell = cell - matrixCellCount;
+                        topRightCell = cell - matrixCellCount + 1;
+                        rightCell = cell + 1;
+                        bottomRightCell = cell + matrixCellCount + 1;
+                    }
+                }
+                if (topCell != null) {
+                    Optional.ofNullable(matrix.get(topCell)).ifPresent(set -> {
+                        neighbours.get(particle).addAll(set);
+                        set.forEach(p -> neighbours.get(p).add(particle));
+                    });
+                }
+                if (topRightCell != null) {
+                    Optional.ofNullable(matrix.get(topRightCell)).ifPresent(set -> {
+                        neighbours.get(particle).addAll(set);
+                        set.forEach(p -> neighbours.get(p).add(particle));
+                    });
+                }
+                if (rightCell != null) {
+                    Optional.ofNullable(matrix.get(rightCell)).ifPresent(set -> {
+                        neighbours.get(particle).addAll(set);
+                        set.forEach(p -> neighbours.get(p).add(particle));
+                    });
+                }
+                if (bottomRightCell != null) {
+                    Optional.ofNullable(matrix.get(bottomRightCell)).ifPresent(set -> {
+                        neighbours.get(particle).addAll(set);
+                        set.forEach(p -> neighbours.get(p).add(particle));
+                    });
+                }
+            }
+        }
+
+        for (Particle particle : getPlane().getParticles()) {
+            neighbours.get(particle).remove(particle);
+        }
+
+        return neighbours;
     }
 
     public static class Builder {
@@ -105,7 +210,6 @@ public class CellIndexMethod {
 
             return new CellIndexMethod(
                     this.matrixCellCount,
-                    this.interactionRadius,
                     this.periodicConditions,
                     this.plane
             );
@@ -140,14 +244,15 @@ public class CellIndexMethod {
         Plane.Builder planeBuilder = Plane.Builder.newBuilder().withLength(planeLength);
         // Creamos todas las partículas (con posiciones random)
         // Asignamos las partículas al plano
-        for (Double particleRadius : particlesRadius) {
+        for (int i = 0; i < particlesRadius.size(); i++) {
             final double x = Math.random() * planeLength;
             final double y = Math.random() * planeLength;
             planeBuilder = planeBuilder.withParticle(
                     Particle.Builder.newBuilder()
+                            .withIdentifier(String.format("p_%d", i))
                             .withX(x)
                             .withY(y)
-                            .withRadius(particleRadius)
+                            .withRadius(particlesRadius.get(i))
                             .build()
             );
         }
@@ -166,6 +271,9 @@ public class CellIndexMethod {
         final CellIndexMethod cim = cimBuilder.build();
 
         // Ejecutamos el método
-        System.out.println(cim);
+        final Map<Particle, Set<Particle>> neighbours = cim.execute();
+        for (Map.Entry<Particle, Set<Particle>> entry : neighbours.entrySet()) {
+            System.out.printf("%s (%.2f - %.2f) -> %s%n", entry.getKey().getIdentifier(), entry.getKey().getX(), entry.getKey().getY(), entry.getValue().stream().map(Particle::getIdentifier).reduce((s1, s2) -> s1 + ", " + s2).orElse(""));
+        }
     }
 }
