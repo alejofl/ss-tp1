@@ -5,4 +5,8 @@
   <artifactId>cell-index-method</artifactId>
   <version>1.0-SNAPSHOT</version>
   <name>Cell Index Method</name>
+  <properties>
+    <maven.compiler.target>19</maven.compiler.target>
+    <maven.compiler.source>19</maven.compiler.source>
+  </properties>
 </project>
