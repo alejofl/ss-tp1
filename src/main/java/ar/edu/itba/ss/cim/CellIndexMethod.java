@@ -156,6 +156,24 @@ public class CellIndexMethod {
         return neighbours;
     }
 
+    public Map<Particle, Set<Particle>> bruteForce() {
+        Map<Particle, Set<Particle>> ans = new HashMap<>();
+        for (Particle particle : getPlane().getParticles()) {
+            ans.put(particle, new HashSet<>());
+        }
+        for (Particle particle : getPlane().getParticles()) {
+            for (Particle otherParticle : getPlane().getParticles()) {
+                if (
+                        !particle.equals(otherParticle) &&
+                        particle.distanceTo(otherParticle, true) <= interactionRadius
+                ) {
+                    ans.get(particle).add(otherParticle);
+                }
+            }
+        }
+        return ans;
+    }
+
     public static class Builder {
         private boolean optimumMatrixCellCount = false;
         private Integer matrixCellCount;

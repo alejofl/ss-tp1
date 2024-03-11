@@ -13,7 +13,7 @@ public class Main {
     public static void main(String[] args) {
         // Leemos archivo y obtenemos los datos
         List<String> data = null;
-        try (Stream<String> stream = Files.lines(Paths.get(Main.class.getClassLoader().getResource("input.txt").toURI()))) {
+        try (Stream<String> stream = Files.lines(Paths.get("input.txt"))) {
             data = stream.toList();
         } catch (Exception e) {
             System.err.println("No input file found");
@@ -30,11 +30,11 @@ public class Main {
         final double interactionRadius = Double.parseDouble(data.get(3)); // r_c
         final boolean periodicConditions = Boolean.parseBoolean(data.get(4)); // cond
         final ArrayList<Double> particlesRadius = new ArrayList<>();
-        for (int i = 5; i < data.size(); i++) {
+        for (int i = 6; i < data.size(); i++) {
             particlesRadius.add(Double.parseDouble(data.get(i))); // r_i
         }
 
-        if (data.size() - 5 != particleCount) {
+        if (data.size() - 6 != particleCount) {
             throw new IllegalStateException("Particle count does not match the amount of radii provided");
         }
 
@@ -68,12 +68,13 @@ public class Main {
         }
         final CellIndexMethod cim = cimBuilder.build();
 
-        // Ejecutamos el método
-        final LocalDateTime startTime = LocalDateTime.now();
+        // Ejecutamos el método CIM
+        LocalDateTime startTime = LocalDateTime.now();
         System.out.printf("%s: Starting Cell Index Method execution%n", startTime);
         final Map<Particle, Set<Particle>> neighbours = cim.execute();
         System.out.printf("%s: Finished Cell Index Method execution%n", LocalDateTime.now());
         System.out.printf("Execution time: %d ms%n", Duration.between(startTime, LocalDateTime.now()).toMillis());
+        System.out.println("--------------------------------------------------");
 
         // Exportamos los resultados
         try (
@@ -91,6 +92,17 @@ public class Main {
             }
         } catch (Exception e) {
             System.err.println("Error writing output");
+        }
+
+        // Ejecutamos el método de fuerza bruta
+        startTime = LocalDateTime.now();
+        System.out.printf("%s: Starting Brute Force execution%n", startTime);
+        final Map<Particle, Set<Particle>> bruteForceNeighbours = cim.bruteForce();
+        System.out.printf("%s: Finished Brute Force execution%n", LocalDateTime.now());
+        System.out.printf("Execution time: %d ms%n", Duration.between(startTime, LocalDateTime.now()).toMillis());
+
+        if (!neighbours.equals(bruteForceNeighbours)) {
+            throw new IllegalStateException("Results from CI and Brute Force methods do not match");
         }
     }
 }
