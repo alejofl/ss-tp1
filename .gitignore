@@ -5,6 +5,7 @@ target/
 
 ### IntelliJ IDEA ###
 .idea
+*.iml
 
 ### Eclipse ###
 .apt_generated
@@ -30,3 +31,6 @@ build/
 
 ### Mac OS ###
 .DS_Store
+
+### Project files ###
+output.txt
