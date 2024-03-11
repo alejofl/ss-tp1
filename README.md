@@ -89,7 +89,7 @@ python animation/animation.py
 
 This will generate an animation of the particles in the simulation. The selected particle will be highlighted in red, and its neighbors will be highlighted in green. A black circle will represent the interaction radius of the selected particle.
 
-##Final Remarks
+## Final Remarks
 
 This project was done in an academic environment, as part of the curriculum of Systems Simulation from Instituto Tecnológico de Buenos Aires (ITBA)
 
