@@ -1,16 +1,23 @@
 package ar.edu.itba.ss.cim;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class CellIndexMethod {
+    final private double interactionRadius;
     final private Integer matrixCellCount;
     final private boolean periodicConditions;
     final private Plane plane;
 
-    private CellIndexMethod(Integer matrixCellCount, boolean periodicConditions, Plane plane) {
+    private CellIndexMethod(double interactionRadius, Integer matrixCellCount, boolean periodicConditions, Plane plane) {
+        this.interactionRadius = interactionRadius;
         this.matrixCellCount = matrixCellCount;
         this.periodicConditions = periodicConditions;
         this.plane = plane;
+    }
+
+    public double getInteractionRadius() {
+        return interactionRadius;
     }
 
     public Integer getMatrixCellCount() {
@@ -140,7 +147,10 @@ public class CellIndexMethod {
         }
 
         for (Particle particle : getPlane().getParticles()) {
-            neighbours.get(particle).remove(particle);
+            Set<Particle> newNeighboursForParticle = neighbours.get(particle).stream()
+                    .filter(p -> !p.equals(particle) && p.distanceTo(particle, true) <= interactionRadius)
+                    .collect(Collectors.toSet());
+            neighbours.put(particle, newNeighboursForParticle);
         }
 
         return neighbours;
@@ -206,6 +216,7 @@ public class CellIndexMethod {
             }
 
             return new CellIndexMethod(
+                    this.interactionRadius,
                     this.matrixCellCount,
                     this.periodicConditions,
                     this.plane

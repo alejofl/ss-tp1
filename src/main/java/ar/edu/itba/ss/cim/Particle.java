@@ -31,6 +31,18 @@ public class Particle {
         return y;
     }
 
+    public double distanceTo(Particle other) {
+        return Math.sqrt(Math.pow(this.x - other.x, 2) + Math.pow(this.y - other.y, 2));
+    }
+
+    public double distanceTo(Particle other, boolean borderToBorder) {
+        double distance = this.distanceTo(other);
+        if (!borderToBorder) {
+            return distance;
+        }
+        return distance - this.radius - other.radius;
+    }
+
     @Override
     public String toString() {
         return "Particle{" +

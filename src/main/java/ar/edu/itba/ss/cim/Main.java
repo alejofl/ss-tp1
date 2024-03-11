@@ -7,7 +7,6 @@ import java.nio.file.StandardOpenOption;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.*;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class Main {
@@ -15,7 +14,7 @@ public class Main {
         // Leemos archivo y obtenemos los datos
         List<String> data = null;
         try (Stream<String> stream = Files.lines(Paths.get(Main.class.getClassLoader().getResource("input.txt").toURI()))) {
-            data = stream.collect(Collectors.toList());
+            data = stream.toList();
         } catch (Exception e) {
             System.err.println("No input file found");
         }
