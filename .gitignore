@@ -32,6 +32,11 @@ build/
 ### Mac OS ###
 .DS_Store
 
+### Python ###
+venv/
+env/
+
 ### Project files ###
 *.txt
+!requirements.txt
 *.png
