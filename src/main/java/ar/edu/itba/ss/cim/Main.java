@@ -85,7 +85,9 @@ public class Main {
                         StandardOpenOption.TRUNCATE_EXISTING
                 )
         ) {
-            for (Map.Entry<Particle, Set<Particle>> entry : neighbours.entrySet()) {
+            List<Map.Entry<Particle, Set<Particle>>> entries = new ArrayList<>(neighbours.entrySet());
+            entries.sort(Comparator.comparing(entry -> Integer.parseInt(entry.getKey().getIdentifier().substring(2))));
+            for (Map.Entry<Particle, Set<Particle>> entry : entries) {
                 String neighboursString = entry.getValue().stream().map(Particle::getIdentifier).reduce((s1, s2) -> s1 + ", " + s2).orElse("");
                 writer.write(String.format("%s %f %f %f \"%s\"", entry.getKey().getIdentifier(), entry.getKey().getRadius(), entry.getKey().getX(), entry.getKey().getY(), neighboursString));
                 writer.newLine();
