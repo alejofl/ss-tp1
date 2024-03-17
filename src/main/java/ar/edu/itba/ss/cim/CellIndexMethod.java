@@ -10,6 +10,9 @@ public class CellIndexMethod {
     final private Plane plane;
 
     private CellIndexMethod(double interactionRadius, Integer matrixCellCount, boolean periodicConditions, Plane plane) {
+        if (matrixCellCount > Math.ceil(plane.getLength() / interactionRadius)) {
+            throw new IllegalArgumentException("Matrix cell count must be less than or equal to the plane length divided by the interaction radius");
+        }
         this.interactionRadius = interactionRadius;
         this.matrixCellCount = matrixCellCount;
         this.periodicConditions = periodicConditions;
@@ -41,6 +44,19 @@ public class CellIndexMethod {
                 '}';
     }
 
+    private boolean isInsideCell(Particle particle, double cellTopLeftX, double cellTopLeftY, double cellBottomRightX, double cellBottomRightY) {
+        if (cellTopLeftX < 0 || cellTopLeftY < 0 || cellBottomRightX > plane.getLength() || cellBottomRightY > plane.getLength()) {
+            return false;
+        }
+
+        // Find the nearest point on the cell to the center of the particle
+        final double nearestX = Math.max(cellTopLeftX, Math.min(particle.getX(), cellBottomRightX));
+        final double nearestY = Math.min(cellTopLeftY, Math.max(particle.getY(), cellBottomRightY));
+        final double distanceX = nearestX - particle.getX();
+        final double distanceY = nearestY - particle.getY();
+        return Math.pow(distanceX, 2) + Math.pow(distanceY, 2) <= Math.pow(particle.getRadius(), 2);
+    }
+
     public Map<Particle, Set<Particle>> execute() {
         final double cellSize = 1.0 * plane.getLength() / matrixCellCount;
         final HashMap<Integer, HashSet<Particle>> matrix = new HashMap<>();
@@ -48,27 +64,71 @@ public class CellIndexMethod {
 
         // Fill the matrix with the particles that are inside each cell
         for (Particle particle : plane.getParticles()) {
-            for (int i = 0; i < matrixCellCount; i++) {
-                for (int j = 0; j < matrixCellCount; j++) {
-                    final int cellNumber = i * matrixCellCount + (j + 1);
-                    final double cellTopLeftX = j * cellSize;
-                    final double cellTopLeftY = plane.getLength() - i * cellSize;
-                    final double cellBottomRightX = (j + 1) * cellSize;
-                    final double cellBottomRightY = plane.getLength() - (i + 1) * cellSize;
+            final int i = (int) Math.floor((plane.getLength() - particle.getY()) / cellSize);
+            final int j = (int) Math.floor(particle.getX() / cellSize);
 
-                    // Find the nearest point on the cell to the center of the particle
-                    final double nearestX = Math.max(cellTopLeftX, Math.min(particle.getX(), cellBottomRightX));
-                    final double nearestY = Math.min(cellTopLeftY, Math.max(particle.getY(), cellBottomRightY));
-                    final double distanceX = nearestX - particle.getX();
-                    final double distanceY = nearestY - particle.getY();
+            final int cellNumber = i * matrixCellCount + (j + 1);
+            final double cellTopLeftX = j * cellSize;
+            final double cellTopLeftY = plane.getLength() - i * cellSize;
+            final double cellBottomRightX = (j + 1) * cellSize;
+            final double cellBottomRightY = plane.getLength() - (i + 1) * cellSize;
 
-                    if (Math.pow(distanceX, 2) + Math.pow(distanceY, 2) <= Math.pow(particle.getRadius(), 2)) {
-                        matrix.putIfAbsent(cellNumber, new HashSet<>());
-                        cellsForParticle.putIfAbsent(particle, new HashSet<>());
-                        matrix.get(cellNumber).add(particle);
-                        cellsForParticle.get(particle).add(cellNumber);
-                    }
-                }
+            final boolean insideLeftCell = isInsideCell(particle, cellTopLeftX - cellSize, cellTopLeftY, cellBottomRightX - cellSize, cellBottomRightY);
+            final boolean insideRightCell = isInsideCell(particle, cellTopLeftX + cellSize, cellTopLeftY, cellBottomRightX + cellSize, cellBottomRightY);
+            final boolean insideTopCell = isInsideCell(particle, cellTopLeftX, cellTopLeftY + cellSize, cellBottomRightX, cellBottomRightY + cellSize);
+            final boolean insideBottomCell = isInsideCell(particle, cellTopLeftX, cellTopLeftY - cellSize, cellBottomRightX, cellBottomRightY - cellSize);
+
+            matrix.putIfAbsent(cellNumber, new HashSet<>());
+            cellsForParticle.putIfAbsent(particle, new HashSet<>());
+            matrix.get(cellNumber).add(particle);
+            cellsForParticle.get(particle).add(cellNumber);
+            if (insideLeftCell) {
+                matrix.putIfAbsent(cellNumber - 1, new HashSet<>());
+                cellsForParticle.putIfAbsent(particle, new HashSet<>());
+                matrix.get(cellNumber - 1).add(particle);
+                cellsForParticle.get(particle).add(cellNumber - 1);
+            }
+            if (insideRightCell) {
+                matrix.putIfAbsent(cellNumber + 1, new HashSet<>());
+                cellsForParticle.putIfAbsent(particle, new HashSet<>());
+                matrix.get(cellNumber + 1).add(particle);
+                cellsForParticle.get(particle).add(cellNumber + 1);
+            }
+            if (insideTopCell) {
+                matrix.putIfAbsent(cellNumber - matrixCellCount, new HashSet<>());
+                cellsForParticle.putIfAbsent(particle, new HashSet<>());
+                matrix.get(cellNumber - matrixCellCount).add(particle);
+                cellsForParticle.get(particle).add(cellNumber - matrixCellCount);
+            }
+            if (insideBottomCell) {
+                matrix.putIfAbsent(cellNumber + matrixCellCount, new HashSet<>());
+                cellsForParticle.putIfAbsent(particle, new HashSet<>());
+                matrix.get(cellNumber + matrixCellCount).add(particle);
+                cellsForParticle.get(particle).add(cellNumber + matrixCellCount);
+            }
+            if (insideLeftCell && insideTopCell) {
+                matrix.putIfAbsent(cellNumber - matrixCellCount - 1, new HashSet<>());
+                cellsForParticle.putIfAbsent(particle, new HashSet<>());
+                matrix.get(cellNumber - matrixCellCount - 1).add(particle);
+                cellsForParticle.get(particle).add(cellNumber - matrixCellCount - 1);
+            }
+            if (insideRightCell && insideTopCell) {
+                matrix.putIfAbsent(cellNumber - matrixCellCount + 1, new HashSet<>());
+                cellsForParticle.putIfAbsent(particle, new HashSet<>());
+                matrix.get(cellNumber - matrixCellCount + 1).add(particle);
+                cellsForParticle.get(particle).add(cellNumber - matrixCellCount + 1);
+            }
+            if (insideLeftCell && insideBottomCell) {
+                matrix.putIfAbsent(cellNumber + matrixCellCount - 1, new HashSet<>());
+                cellsForParticle.putIfAbsent(particle, new HashSet<>());
+                matrix.get(cellNumber + matrixCellCount - 1).add(particle);
+                cellsForParticle.get(particle).add(cellNumber + matrixCellCount - 1);
+            }
+            if (insideRightCell && insideBottomCell) {
+                matrix.putIfAbsent(cellNumber + matrixCellCount + 1, new HashSet<>());
+                cellsForParticle.putIfAbsent(particle, new HashSet<>());
+                matrix.get(cellNumber + matrixCellCount + 1).add(particle);
+                cellsForParticle.get(particle).add(cellNumber + matrixCellCount + 1);
             }
         }
 
@@ -89,18 +149,18 @@ public class CellIndexMethod {
                 Integer bottomRightCell = null;
                 if (periodicConditions) {
                     if (cell % matrixCellCount == 0) {
-                        topCell = (cell - matrixCellCount) % (matrixCellCount * matrixCellCount);
+                        topCell = Math.floorMod(cell - matrixCellCount, matrixCellCount * matrixCellCount);
                         if (topCell == 0) {
                             topCell = matrixCellCount * matrixCellCount;
                         }
-                        topRightCell = (cell - 2 * matrixCellCount + 1) % (matrixCellCount * matrixCellCount);
-                        rightCell = (cell + 1 - matrixCellCount) % (matrixCellCount * matrixCellCount);
-                        bottomRightCell = (cell + 1) % (matrixCellCount * matrixCellCount);
+                        topRightCell = Math.floorMod(cell - 2 * matrixCellCount + 1, matrixCellCount * matrixCellCount);
+                        rightCell = Math.floorMod(cell + 1 - matrixCellCount, matrixCellCount * matrixCellCount);
+                        bottomRightCell = Math.floorMod(cell + 1, matrixCellCount * matrixCellCount);
                     } else {
-                        topCell = (cell - matrixCellCount) % (matrixCellCount * matrixCellCount);
-                        topRightCell = (cell - matrixCellCount + 1) % (matrixCellCount * matrixCellCount);
-                        rightCell = (cell + 1) % (matrixCellCount * matrixCellCount);;
-                        bottomRightCell = (cell + matrixCellCount + 1) % (matrixCellCount * matrixCellCount);;
+                        topCell = Math.floorMod(cell - matrixCellCount, matrixCellCount * matrixCellCount);
+                        topRightCell = Math.floorMod(cell - matrixCellCount + 1, matrixCellCount * matrixCellCount);
+                        rightCell = Math.floorMod(cell + 1, matrixCellCount * matrixCellCount);;
+                        bottomRightCell = Math.floorMod(cell + matrixCellCount + 1, matrixCellCount * matrixCellCount);
                     }
                 } else {
                     if (cell < matrixCellCount) {
@@ -148,8 +208,14 @@ public class CellIndexMethod {
 
         for (Particle particle : getPlane().getParticles()) {
             Set<Particle> newNeighboursForParticle = neighbours.get(particle).stream()
-                    .filter(p -> !p.equals(particle) && p.distanceTo(particle, true) <= interactionRadius)
-                    .collect(Collectors.toSet());
+                    .filter(
+                                p -> !p.equals(particle) &&
+                                    (
+                                        (periodicConditions && p.distanceWithPeriodicConditions(particle, plane.getLength(), true) <= interactionRadius)
+                                        ||
+                                        (!periodicConditions && p.distanceTo(particle, true) <= interactionRadius)
+                                    )
+                    ).collect(Collectors.toSet());
             neighbours.put(particle, newNeighboursForParticle);
         }
 
@@ -165,7 +231,11 @@ public class CellIndexMethod {
             for (Particle otherParticle : getPlane().getParticles()) {
                 if (
                         !particle.equals(otherParticle) &&
-                        particle.distanceTo(otherParticle, true) <= interactionRadius
+                        (
+                                (periodicConditions && particle.distanceWithPeriodicConditions(otherParticle, plane.getLength(), true) <= interactionRadius)
+                                ||
+                                (!periodicConditions && particle.distanceTo(otherParticle, true) <= interactionRadius)
+                        )
                 ) {
                     ans.get(particle).add(otherParticle);
                 }

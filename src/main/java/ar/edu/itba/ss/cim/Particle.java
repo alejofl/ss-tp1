@@ -32,11 +32,31 @@ public class Particle {
     }
 
     public double distanceTo(Particle other) {
-        return Math.sqrt(Math.pow(this.x - other.x, 2) + Math.pow(this.y - other.y, 2));
+        return distanceTo(other, false);
     }
 
     public double distanceTo(Particle other, boolean borderToBorder) {
-        double distance = this.distanceTo(other);
+        double distance = Math.sqrt(Math.pow(this.x - other.x, 2) + Math.pow(this.y - other.y, 2));
+        if (!borderToBorder) {
+            return distance;
+        }
+        return distance - this.radius - other.radius;
+    }
+
+    public double distanceWithPeriodicConditions(Particle other, double planeLength) {
+        return distanceWithPeriodicConditions(other, planeLength, false);
+    }
+
+    public double distanceWithPeriodicConditions(Particle other, double planeLength, boolean borderToBorder) {
+        double x = Math.abs(this.x - other.x);
+        double y = Math.abs(this.y - other.y);
+        if (x > planeLength / 2) {
+            x = planeLength - x;
+        }
+        if (y > planeLength / 2) {
+            y = planeLength - y;
+        }
+        double distance = Math.sqrt(Math.pow(x, 2) + Math.pow(y, 2));
         if (!borderToBorder) {
             return distance;
         }
@@ -47,7 +67,7 @@ public class Particle {
     public String toString() {
         return "Particle{" +
                 "identifier='" + identifier + "'" +
-                "radius=" + radius +
+                ", radius=" + radius +
                 ", x=" + x +
                 ", y=" + y +
                 '}';
