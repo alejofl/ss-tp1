@@ -1,5 +1,7 @@
 # Cell Index Method
 
+[![](https://jitpack.io/v/alejofl/ss-tp1.svg)](https://jitpack.io/#alejofl/ss-tp1)
+
 ## Introduction
 
 The Cell Index Method is a computational algorithm used in the field of computational physics. It is particularly useful for simulating the behavior of particles in a system, where the interaction between particles is important. This method allows for efficient computation by dividing the simulation space into cells, hence the name. Each particle is assigned to a cell, and only interactions with particles in neighboring cells are considered. This significantly reduces the computational complexity of the simulation.
