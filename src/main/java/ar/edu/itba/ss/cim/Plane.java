@@ -4,11 +4,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class Plane {
+public class Plane<T extends Particle> {
     private final int length;
-    private final List<? extends Particle> particles;
+    private final List<T> particles;
 
-    protected Plane(int length, List<Particle> particles) {
+    protected Plane(int length, List<T> particles) {
         this.length = length;
         this.particles = particles;
     }
@@ -17,7 +17,7 @@ public class Plane {
         return length;
     }
 
-    public List<? extends Particle> getParticles() {
+    public List<T> getParticles() {
         return particles;
     }
 
@@ -29,19 +29,19 @@ public class Plane {
                 '}';
     }
 
-    public static class Builder {
+    public static class Builder<T extends Particle> {
         private Integer length;
-        private final ArrayList<Particle> particles;
+        private final ArrayList<T> particles;
 
         protected Builder() {
             this.particles = new ArrayList<>();
         }
 
-        public static Builder newBuilder() {
-            return new Builder();
+        public static <K extends Particle> Builder<K> newBuilder() {
+            return new Builder<>();
         }
 
-        public Builder withLength(int length) {
+        public Builder<T> withLength(int length) {
             if (particles.stream().anyMatch(particle -> particle.getX() > length || particle.getY() > length) || length <= 0) {
                 throw new IllegalArgumentException();
             }
@@ -49,7 +49,7 @@ public class Plane {
             return this;
         }
 
-        public Builder withParticle(Particle particle) {
+        public Builder<T> withParticle(T particle) {
             if (particle.getX() < 0 || particle.getY() < 0 || (length != null && (particle.getX() > length || particle.getY() > length))) {
                 throw new IllegalArgumentException();
             }
@@ -57,26 +57,26 @@ public class Plane {
             return this;
         }
 
-        public Builder withParticles(Particle... particles) {
-            for (Particle p : particles) {
+        public Builder<T> withParticles(T... particles) {
+            for (T p : particles) {
                 this.withParticle(p);
             }
             return this;
         }
 
-        public Builder withParticles(Iterable<Particle> particles) {
-            for (Particle p : particles) {
+        public Builder<T> withParticles(Iterable<T> particles) {
+            for (T p : particles) {
                 this.withParticle(p);
             }
             return this;
         }
 
-        public Plane build() {
+        public Plane<T> build() {
             if (length == null || particles.isEmpty()) {
                 throw new IllegalStateException();
             }
 
-            return new Plane(length, new ArrayList<>(particles));
+            return new Plane<>(length, new ArrayList<>(particles));
         }
     }
 }

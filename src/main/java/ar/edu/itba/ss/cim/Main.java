@@ -39,7 +39,7 @@ public class Main {
         }
 
         // Creamos el plano
-        Plane.Builder planeBuilder = Plane.Builder.newBuilder().withLength(planeLength);
+        Plane.Builder<Particle> planeBuilder = Plane.Builder.newBuilder().withLength(planeLength);
         // Creamos todas las partículas (con posiciones random)
         // Asignamos las partículas al plano
         for (int i = 0; i < particlesRadius.size(); i++) {
@@ -54,10 +54,10 @@ public class Main {
                             .build()
             );
         }
-        final Plane plane = planeBuilder.build();
+        final Plane<Particle> plane = planeBuilder.build();
 
         // Creamos el ejecutor del método
-        CellIndexMethod.Builder cimBuilder = CellIndexMethod.Builder.newBuilder()
+        CellIndexMethod.Builder<Particle> cimBuilder = CellIndexMethod.Builder.newBuilder()
                 .withInteractionRadius(interactionRadius)
                 .withPeriodicConditions(periodicConditions)
                 .withPlane(plane);
@@ -66,7 +66,7 @@ public class Main {
         } else {
             cimBuilder = cimBuilder.withMatrixCellCount(matrixCellCount);
         }
-        final CellIndexMethod cim = cimBuilder.build();
+        final CellIndexMethod<Particle> cim = cimBuilder.build();
 
         // Ejecutamos el método CIM
         LocalDateTime startTime = LocalDateTime.now();

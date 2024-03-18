@@ -3,13 +3,13 @@ package ar.edu.itba.ss.cim;
 import java.util.*;
 import java.util.stream.Collectors;
 
-public class CellIndexMethod {
+public class CellIndexMethod<T extends Particle> {
     final private double interactionRadius;
     final private Integer matrixCellCount;
     final private boolean periodicConditions;
-    final private Plane plane;
+    final private Plane<T> plane;
 
-    private CellIndexMethod(double interactionRadius, Integer matrixCellCount, boolean periodicConditions, Plane plane) {
+    private CellIndexMethod(double interactionRadius, Integer matrixCellCount, boolean periodicConditions, Plane<T> plane) {
         if (matrixCellCount > Math.ceil(plane.getLength() / interactionRadius)) {
             throw new IllegalArgumentException("Matrix cell count must be less than or equal to the plane length divided by the interaction radius");
         }
@@ -31,7 +31,7 @@ public class CellIndexMethod {
         return periodicConditions;
     }
 
-    public Plane getPlane() {
+    public Plane<T> getPlane() {
         return plane;
     }
 
@@ -57,13 +57,13 @@ public class CellIndexMethod {
         return Math.pow(distanceX, 2) + Math.pow(distanceY, 2) <= Math.pow(particle.getRadius(), 2);
     }
 
-    public Map<Particle, Set<Particle>> execute() {
+    public Map<T, Set<T>> execute() {
         final double cellSize = 1.0 * plane.getLength() / matrixCellCount;
-        final HashMap<Integer, HashSet<Particle>> matrix = new HashMap<>();
-        final HashMap<Particle, HashSet<Integer>> cellsForParticle = new HashMap<>();
+        final HashMap<Integer, HashSet<T>> matrix = new HashMap<>();
+        final HashMap<T, HashSet<Integer>> cellsForParticle = new HashMap<>();
 
         // Fill the matrix with the particles that are inside each cell
-        for (Particle particle : plane.getParticles()) {
+        for (T particle : plane.getParticles()) {
             final int i = (int) Math.floor((plane.getLength() - particle.getY()) / cellSize);
             final int j = (int) Math.floor(particle.getX() / cellSize);
 
@@ -133,13 +133,13 @@ public class CellIndexMethod {
         }
 
         // Create neighbours list
-        final Map<Particle, Set<Particle>> neighbours = new HashMap<>();
-        for (Particle particle : plane.getParticles()) {
+        final Map<T, Set<T>> neighbours = new HashMap<>();
+        for (T particle : plane.getParticles()) {
             neighbours.put(particle, new HashSet<>());
         }
 
         // Fill the neighbours list
-        for (Particle particle : plane.getParticles()) {
+        for (T particle : plane.getParticles()) {
             final HashSet<Integer> cells = cellsForParticle.get(particle);
             for (Integer cell : cells) {
                 Optional.ofNullable(matrix.get(cell)).ifPresent(set -> neighbours.get(particle).addAll(set));
@@ -206,8 +206,8 @@ public class CellIndexMethod {
             }
         }
 
-        for (Particle particle : getPlane().getParticles()) {
-            Set<Particle> newNeighboursForParticle = neighbours.get(particle).stream()
+        for (T particle : getPlane().getParticles()) {
+            Set<T> newNeighboursForParticle = neighbours.get(particle).stream()
                     .filter(
                                 p -> !p.equals(particle) &&
                                     (
@@ -222,13 +222,13 @@ public class CellIndexMethod {
         return neighbours;
     }
 
-    public Map<Particle, Set<Particle>> bruteForce() {
-        Map<Particle, Set<Particle>> ans = new HashMap<>();
-        for (Particle particle : getPlane().getParticles()) {
+    public Map<T, Set<T>> bruteForce() {
+        Map<T, Set<T>> ans = new HashMap<>();
+        for (T particle : getPlane().getParticles()) {
             ans.put(particle, new HashSet<>());
         }
-        for (Particle particle : getPlane().getParticles()) {
-            for (Particle otherParticle : getPlane().getParticles()) {
+        for (T particle : getPlane().getParticles()) {
+            for (T otherParticle : getPlane().getParticles()) {
                 if (
                         !particle.equals(otherParticle) &&
                         (
@@ -244,12 +244,12 @@ public class CellIndexMethod {
         return ans;
     }
 
-    public static class Builder {
+    public static class Builder<T extends Particle> {
         private boolean optimumMatrixCellCount = false;
         private Integer matrixCellCount;
         private Double interactionRadius;
         private Boolean periodicConditions = false;
-        private Plane plane;
+        private Plane<T> plane;
 
         private Builder() {
 
@@ -259,11 +259,11 @@ public class CellIndexMethod {
             this.matrixCellCount = (int) Math.ceil(plane.getLength() / interactionRadius);
         }
 
-        public static Builder newBuilder() {
-            return new Builder();
+        public static <K extends Particle> Builder<K> newBuilder() {
+            return new Builder<>();
         }
 
-        public Builder withOptimumMatrixCellCount() {
+        public Builder<T> withOptimumMatrixCellCount() {
             this.optimumMatrixCellCount = true;
             if (plane != null && interactionRadius != null) {
                 calculateOptimumMatrixCellCount();
@@ -271,13 +271,13 @@ public class CellIndexMethod {
             return this;
         }
 
-        public Builder withMatrixCellCount(int matrixCellCount) {
+        public Builder<T> withMatrixCellCount(int matrixCellCount) {
             this.optimumMatrixCellCount = false;
             this.matrixCellCount = matrixCellCount;
             return this;
         }
 
-        public Builder withInteractionRadius(double interactionRadius) {
+        public Builder<T> withInteractionRadius(double interactionRadius) {
             this.interactionRadius = interactionRadius;
             if (plane != null && optimumMatrixCellCount) {
                 calculateOptimumMatrixCellCount();
@@ -285,12 +285,12 @@ public class CellIndexMethod {
             return this;
         }
 
-        public Builder withPeriodicConditions(boolean periodicConditions) {
+        public Builder<T> withPeriodicConditions(boolean periodicConditions) {
             this.periodicConditions = periodicConditions;
             return this;
         }
 
-        public Builder withPlane(Plane plane) {
+        public Builder<T> withPlane(Plane<T> plane) {
             this.plane = plane;
             if (plane != null && this.interactionRadius != null && optimumMatrixCellCount) {
                 calculateOptimumMatrixCellCount();
@@ -298,12 +298,12 @@ public class CellIndexMethod {
             return this;
         }
 
-        public CellIndexMethod build() {
+        public CellIndexMethod<T> build() {
             if (this.matrixCellCount == null || this.interactionRadius == null || this.plane == null) {
                 throw new IllegalStateException();
             }
 
-            return new CellIndexMethod(
+            return new CellIndexMethod<>(
                     this.interactionRadius,
                     this.matrixCellCount,
                     this.periodicConditions,
