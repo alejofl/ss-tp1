@@ -5,10 +5,10 @@ import java.util.Objects;
 public class Particle {
     private final String identifier;
     private final double radius;
-    private final double x;
-    private final double y;
+    private double x;
+    private double y;
 
-    private Particle(String identifier, double radius, double x, double y) {
+    protected Particle(String identifier, double radius, double x, double y) {
         this.identifier = identifier;
         this.radius = radius;
         this.x = x;
@@ -29,6 +29,14 @@ public class Particle {
 
     public double getY() {
         return y;
+    }
+
+    public void setX(double x) {
+        this.x = x;
+    }
+
+    public void setY(double y) {
+        this.y = y;
     }
 
     public double distanceTo(Particle other) {
@@ -92,7 +100,7 @@ public class Particle {
         private Double x;
         private Double y;
 
-        private Builder() {
+        protected Builder() {
 
         }
 

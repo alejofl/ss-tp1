@@ -6,9 +6,9 @@ import java.util.stream.Collectors;
 
 public class Plane {
     private final int length;
-    private final List<Particle> particles;
+    private final List<? extends Particle> particles;
 
-    private Plane(int length, List<Particle> particles) {
+    protected Plane(int length, List<Particle> particles) {
         this.length = length;
         this.particles = particles;
     }
@@ -17,7 +17,7 @@ public class Plane {
         return length;
     }
 
-    public List<Particle> getParticles() {
+    public List<? extends Particle> getParticles() {
         return particles.stream().collect((Collectors.toList()));
     }
 
@@ -33,7 +33,7 @@ public class Plane {
         private Integer length;
         private final ArrayList<Particle> particles;
 
-        private Builder() {
+        protected Builder() {
             this.particles = new ArrayList<>();
         }
 
