@@ -18,7 +18,7 @@ public class Plane {
     }
 
     public List<? extends Particle> getParticles() {
-        return particles.stream().collect((Collectors.toList()));
+        return particles;
     }
 
     @Override
