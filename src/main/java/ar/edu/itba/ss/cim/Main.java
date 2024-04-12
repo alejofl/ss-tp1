@@ -39,7 +39,7 @@ public class Main {
         }
 
         // Creamos el plano
-        Plane.Builder<Particle> planeBuilder = Plane.Builder.newBuilder().withLength(planeLength);
+        Plane.Builder<Particle> planeBuilder = Plane.Builder.newBuilder().withLength(1.0 * planeLength);
         // Creamos todas las partículas (con posiciones random)
         // Asignamos las partículas al plano
         for (int i = 0; i < particlesRadius.size(); i++) {

@@ -5,15 +5,15 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public class Plane<T extends Particle> {
-    private final int length;
+    private final double length;
     private final List<T> particles;
 
-    protected Plane(int length, List<T> particles) {
+    protected Plane(double length, List<T> particles) {
         this.length = length;
         this.particles = particles;
     }
 
-    public int getLength() {
+    public double getLength() {
         return length;
     }
 
@@ -30,7 +30,7 @@ public class Plane<T extends Particle> {
     }
 
     public static class Builder<T extends Particle> {
-        private Integer length;
+        private Double length;
         private final ArrayList<T> particles;
 
         protected Builder() {
@@ -41,7 +41,7 @@ public class Plane<T extends Particle> {
             return new Builder<>();
         }
 
-        public Builder<T> withLength(int length) {
+        public Builder<T> withLength(Double length) {
             if (particles.stream().anyMatch(particle -> particle.getX() > length || particle.getY() > length) || length <= 0) {
                 throw new IllegalArgumentException();
             }
